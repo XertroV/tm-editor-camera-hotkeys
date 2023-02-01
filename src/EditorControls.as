@@ -1,56 +1,11 @@
 namespace Editor {
     // main waypoints
-    Waypoint@[]@ _Waypoints = array<Waypoint@>();
-    Waypoint@[]@ _CachedWaypoints;
-    uint vCountAtRefresh = 0;
-
-    Waypoint@[]@ Waypoints {
-        get {
-            if (_CachedWaypoints !is null)
-                return _CachedWaypoints;
-            return _Waypoints;
-        }
-    }
 
     bool refreshing = false;
     void Refresh() {
         if (refreshing) return;
         refreshing = true;
-        lastTargeted = -1;
-        vCountAtRefresh = lastVertexCount;
-        // prep new waypoints array
-        @_CachedWaypoints = _Waypoints;
-        @_Waypoints = array<Waypoint@>();
-
-        GetItems();
-        GetCpBlocks();
-        yield();
-        _Waypoints.SortAsc();
-        @_CachedWaypoints = null;
         refreshing = false;
-    }
-
-    void GetItems() {
-        auto map = GetApp().RootMap;
-        if (map is null) return;
-        for (uint i = 0; i < map.AnchoredObjects.Length; i++) {
-            CheckPause();
-            auto item = map.AnchoredObjects[i];
-            if (item.ItemModel.IsCheckpoint || item.ItemModel.IsFinish || item.ItemModel.IsStart || item.ItemModel.IsStartFinish) {
-                _Waypoints.InsertLast(Waypoint(item));
-            }
-        }
-    }
-
-    void GetCpBlocks() {
-        auto map = GetApp().RootMap;
-        if (map is null) return;
-        for (uint i = 0; i < map.Blocks.Length; i++) {
-            CheckPause();
-            auto item = map.Blocks[i];
-            if (item.WaypointSpecialProperty is null) continue;
-            _Waypoints.InsertLast(Waypoint(item));
-        }
     }
 
     void SetTargetedPosition(vec3 pos, bool updateCam = true) {
@@ -67,17 +22,9 @@ namespace Editor {
 
     void UpdateCamera() {
         auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
+        auto origPSZP = editor.OrbitalCameraControl.m_ParamScrollZoomPower;
+        editor.OrbitalCameraControl.m_ParamScrollZoomPower = 0;
         editor.ButtonZoomInOnClick();
-        editor.ButtonZoomOutOnClick();
-    }
-
-    void SelectNext() {
-        lastTargeted = (lastTargeted + 1) % Waypoints.Length;
-        Waypoints[lastTargeted].TargetMe();
-    }
-
-    void SelectPrevious() {
-        lastTargeted = (Waypoints.Length + Math::Max(-1, lastTargeted - 1)) % Waypoints.Length;
-        Waypoints[lastTargeted].TargetMe();
+        editor.OrbitalCameraControl.m_ParamScrollZoomPower = origPSZP;
     }
 }

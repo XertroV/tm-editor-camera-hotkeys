@@ -1,0 +1,3 @@
+void TestAnglesSetCurrent() {
+    SetAnimationGoTo(CurrentOrientation());
+}

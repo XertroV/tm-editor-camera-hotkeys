@@ -1,3 +1,5 @@
+const float TAU = 6.28318530717958647692;
+
 void Main() {
     startnew(WatchEditorAndValues);
 }
@@ -19,15 +21,34 @@ void WatchEditorAndValues() {
         }
         if (lastEditorOpen) {
             auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
-            if (editor.Challenge !is null) {
-                if (S_AutoRefresh && editor.Challenge.VertexCount != lastVertexCount)
-                    startnew(Editor::Refresh);
-                lastVertexCount = editor.Challenge.VertexCount;
-            }
+            // editor.OrbitalCameraControl.m_CurrentVAngle = 3.14159 / 2.0 * ((Math::Sin(float(Time::Now) / 10000.0) * .5 + .5));
+            // Editor::UpdateCamera();
         }
     }
 }
 
+AnimMgr@ CameraAnimMgr = null;
+
+/** Called every frame. `dt` is the delta time (milliseconds since last frame).
+*/
+void Update(float dt) {
+    if (lastEditorOpen && CameraAnimMgr !is null && CameraAnimMgr.Update(true)) {
+        UpdateCameraProgress(CameraAnimMgr.Progress);
+        if (CameraAnimMgr.Progress >= 1.0) {
+            @CameraAnimMgr = null;
+        }
+    }
+}
+
+
+void UpdateCameraProgress(float t) {
+    auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
+    auto cam = editor.OrbitalCameraControl;
+    Editor::SetOrbitalAngle(
+        Math::Lerp(g_StartingHAngle, g_EndingHAngle, t),
+        Math::Lerp(g_StartingVAngle, g_EndingVAngle, t)
+    );
+}
 
 
 void Notify(const string &in msg) {
@@ -45,9 +66,8 @@ void NotifyWarning(const string &in msg) {
     UI::ShowNotification(Meta::ExecutingPlugin().Name + ": Warning", msg, vec4(.9, .6, .2, .3), 15000);
 }
 
-// const string PluginIcon = Icons::Kenney::SortHorizontal;
-const string PluginIcon = Icons::AngleDoubleRight;
-const string MenuTitle = "\\$2bf" + PluginIcon + "\\$z " + Meta::ExecutingPlugin().Name;
+const string PluginIcon = Icons::Kenney::StickMoveBtAlt;
+const string MenuTitle = "\\$f61" + PluginIcon + "\\$z " + Meta::ExecutingPlugin().Name;
 
 // show the window immediately upon installation
 [Setting hidden]
@@ -60,63 +80,65 @@ void RenderMenu() {
     }
 }
 
-float lastBtnWidth = 30;
 void Render() {
     if (!ShowWindow) return;
-    if (cast<CGameCtnEditorFree>(GetApp().Editor) is null) return;
-    if (GetApp().CurrentPlayground !is null) return;
-    int2 wh = int2(400, 600);
-    // auto cond = UI::Cond::Appearing;
-    auto cond = UI::Cond::FirstUseEver;
-    UI::SetNextWindowSize(wh.x, wh.y, cond);
-    UI::SetNextWindowPos(Draw::GetWidth() - wh.x * 5 / 4, (Draw::GetHeight() - wh.y) / 2, cond);
-    UI::PushStyleVar(UI::StyleVar::WindowTitleAlign, vec2(.5, .5));
-    UI::PushFont(largerFont);
-    if (UI::Begin(MenuTitle, ShowWindow, UI::WindowFlags::None)) {
-        UI::PushFont(regularFont);
-        // UI::Columns(3, "", false);
-        auto initPos = UI::GetCursorPos();
-        auto width = UI::GetWindowContentRegionWidth();
-        UI::BeginDisabled(Editor::refreshing);
-        if (UI::Button(Icons::Refresh)) startnew(Editor::Refresh);
-        UI::EndDisabled();
-        if (!S_AutoRefresh && Editor::vCountAtRefresh != lastVertexCount) {
-            UI::SameLine();
-            UI::Text("\\$888Mb outdated.");
-        }
-
-        // UI::NextColumn();
-        UI::SetCursorPos(initPos + vec2(width / 2. - 30. - lastBtnWidth / 2., 0));
-        if (UI::Button(Icons::Kenney::Previous)) Editor::SelectPrevious();
-        lastBtnWidth = UI::GetItemRect().z;
-        UI::SetCursorPos(initPos + vec2(width / 2. + 30. - lastBtnWidth / 2., 0));
-        // UI::SameLine();
-        if (UI::Button(Icons::Kenney::Next)) Editor::SelectNext();
-        if (UI::BeginChild("cp table child", UI::GetContentRegionAvail())) {
-            if (UI::BeginTable("checkpoints table", 6, UI::TableFlags::SizingFixedFit)) {
-                UI::TableSetupColumn("ix", UI::TableColumnFlags::WidthFixed);
-                UI::TableSetupColumn("name", UI::TableColumnFlags::WidthStretch);
-                UI::TableSetupColumn("blockOrItem", UI::TableColumnFlags::WidthFixed);
-                UI::TableSetupColumn("type", UI::TableColumnFlags::WidthFixed);
-                UI::TableSetupColumn("linked", UI::TableColumnFlags::WidthFixed);
-                UI::TableSetupColumn("target", UI::TableColumnFlags::WidthFixed);
-                UI::ListClipper wpClip(Editor::Waypoints.Length);
-                while (wpClip.Step()) {
-                    for (int i = wpClip.DisplayStart; i < wpClip.DisplayEnd; i++) {
-                        Editor::Waypoints[i].DrawTableRow(i);
-                    }
-                }
-                UI::EndTable();
-            }
-        }
-        UI::EndChild();
-        UI::PopFont();
+    if (UI::Begin(Meta::ExecutingPlugin().Name, ShowWindow)) {
+        if (UI::Button("Test Angles: Set Current")) TestAnglesSetCurrent();
     }
     UI::End();
-    UI::PopFont();
-    UI::PopStyleVar();
 }
 
+/** Called whenever a key is pressed on the keyboard. See the documentation for the [`VirtualKey` enum](https://openplanet.dev/docs/api/global/VirtualKey).
+*/
+UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
+    if (down && lastEditorOpen && CheckHotKey(key)) return UI::InputBlocking::Block;
+    return UI::InputBlocking::DoNothing;
+}
+
+bool CheckHotKey(VirtualKey k) {
+    if (k == S_FrontView) return OnFrontView();
+    if (k == S_SideView) return OnSideView();
+    if (k == S_TopDownView) return OnTopDownView();
+    if (k == S_FlipAxis) return OnFlipAxis();
+    return false;
+}
+
+bool OnFrontView() {
+    return SetAnimationGoTo(vec2(2, 0));
+}
+bool OnSideView() {
+    return SetAnimationGoTo(vec2(1, 0));
+}
+bool OnTopDownView() {
+    return SetAnimationGoTo(vec2(0, 1));
+}
+bool OnFlipAxis() {
+    auto c = CameraAnimMgr is null ? CurrentOrientation() : (vec2(g_EndingHAngle, g_EndingVAngle) / TAU * 4.0);
+    return SetAnimationGoTo(c * vec2(1, -1) + vec2(2, 0));
+}
+
+vec2 CurrentOrientation() {
+    auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
+    float h = editor.OrbitalCameraControl.m_CurrentHAngle;
+    float v = editor.OrbitalCameraControl.m_CurrentVAngle;
+    return vec2(h, v) / TAU * 4.0;
+}
+
+float g_StartingHAngle = 0;
+float g_StartingVAngle = 0;
+float g_EndingHAngle = 0;
+float g_EndingVAngle = 0;
+
+bool SetAnimationGoTo(vec2 lookAngleUV) {
+    @CameraAnimMgr = AnimMgr(false, S_AnimationDuration);
+    auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
+    auto cam = editor.OrbitalCameraControl;
+    g_StartingHAngle = cam.m_CurrentHAngle;
+    g_StartingVAngle = cam.m_CurrentVAngle;
+    g_EndingHAngle = lookAngleUV.x * TAU / 4.0;
+    g_EndingVAngle = lookAngleUV.y * TAU / 4.0;
+    return true;
+}
 
 void AddSimpleTooltip(const string &in msg) {
     if (UI::IsItemHovered()) {
