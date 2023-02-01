@@ -1,6 +1,6 @@
 # Editor Camera Hotkeys
 
-Hotkeys for the editor to move the camera like Blender. (Numpad 1, 3, 7, 9)
+Hotkeys for the editor to move the camera like Blender to align with X/Y/Z axes. (Numpad 1, 3, 7, 9)
 
 License: Public Domain
 
