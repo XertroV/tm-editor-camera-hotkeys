@@ -91,7 +91,10 @@ void Render() {
 /** Called whenever a key is pressed on the keyboard. See the documentation for the [`VirtualKey` enum](https://openplanet.dev/docs/api/global/VirtualKey).
 */
 UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
-    if (down && lastEditorOpen && CheckHotKey(key)) return UI::InputBlocking::Block;
+    if (down && lastEditorOpen && CheckHotKey(key))
+        // return UI::InputBlocking::Block;
+        // for the moment, don't block. it bugs editor inputs (and blocking inputs in general seems non-deterministic based on which plugins are installed)
+        return UI::InputBlocking::DoNothing;
     return UI::InputBlocking::DoNothing;
 }
 
