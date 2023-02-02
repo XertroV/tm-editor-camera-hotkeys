@@ -11,3 +11,13 @@ Suggestions/feedback: @XertroV on Openplanet discord
 Code/issues: [https://github.com/XertroV/tm-editor-camera-hotkeys](https://github.com/XertroV/tm-editor-camera-hotkeys)
 
 GL HF
+
+<!--
+
+follow camera target (block follows target)
+mouse stops working after disabling this
+DisableMouseDetection(false) brings mouse back
+
+
+
+-->

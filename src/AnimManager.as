@@ -8,6 +8,7 @@ class AnimMgr {
 
     AnimMgr(bool startOpen = false, float duration = 250.0) {
         t = startOpen ? 1.0 : 0.0;
+        animOut = t;
         animDuration = duration;
     }
 
@@ -41,6 +42,12 @@ class AnimMgr {
     float Progress {
         get {
             return animOut;
+        }
+    }
+
+    bool IsDone {
+        get {
+            return animOut >= 1.0;
         }
     }
 }
