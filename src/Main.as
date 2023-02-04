@@ -206,34 +206,6 @@ bool OnNumpad8() {
 
 bool cancelLeftFirst = true;
 
-// run on next frame to cancel game's auto horiz rotation
-void CancelTurnH() {
-    auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
-    // print(editor.PluginMapType.CameraHAngle);
-    // print(editor.OrbitalCameraControl.m_CurrentHAngle);
-    if (cancelLeftFirst)
-    editor.PluginMapType.Camera.TurnH(true, true, false);
-    editor.PluginMapType.Camera.TurnH(false, true, false);
-    if (!cancelLeftFirst)
-    editor.PluginMapType.Camera.TurnH(true, true, false);
-    // print(editor.PluginMapType.CameraHAngle);
-    // print(editor.OrbitalCameraControl.m_CurrentHAngle);
-    // print(editor.PluginMapType.CameraHAngle);
-    // print(editor.OrbitalCameraControl.m_CurrentHAngle);
-    // print(editor.PluginMapType.CameraHAngle);
-    // print(editor.OrbitalCameraControl.m_CurrentHAngle);
-    UpdateAnimAndCamera();
-}
-// run on next frame to cancel game's auto vert rotation
-void CancelTurnV() {
-    auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
-    // editor.PluginMapType.Camera.TurnV(false, false);
-    editor.PluginMapType.Camera.TurnV(false, false);
-    editor.PluginMapType.Camera.TurnV(true, false);
-    // editor.OrbitalCameraControl.Pos = lastCamPos;
-    UpdateAnimAndCamera();
-}
-
 
 vec2 DestOrCurrentOrientation() {
     return CameraAnimMgr.IsDone ? CurrentOrientation() : (vec2(g_EndingHAngle, g_EndingVAngle) / TAU * 4.0);

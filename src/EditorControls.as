@@ -1,6 +1,4 @@
 namespace Editor {
-    // main waypoints
-
     bool refreshing = false;
     void Refresh() {
         if (refreshing) return;
@@ -14,6 +12,7 @@ namespace Editor {
         cast<CGameCtnEditorFree>(GetApp().Editor).OrbitalCameraControl.m_MaxVAngle = TAU * 100;
         cast<CGameCtnEditorFree>(GetApp().Editor).OrbitalCameraControl.m_MinVAngle = -TAU * 100;
     }
+
     void DisableCustomCameraInputs() {
         cast<CGameCtnEditorFree>(GetApp().Editor).PluginMapType.EnableEditorInputsCustomProcessing = false;
     }
@@ -34,12 +33,12 @@ namespace Editor {
         // if (updateCam) UpdateCamera();
     }
 
-    void UpdateCamera() {
-        auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
-        auto orbital = editor.OrbitalCameraControl;
-        auto origPSZP = editor.OrbitalCameraControl.m_ParamScrollZoomPower;
-        editor.OrbitalCameraControl.m_ParamScrollZoomPower = 0;
-        editor.ButtonZoomInOnClick();
-        editor.OrbitalCameraControl.m_ParamScrollZoomPower = origPSZP;
-    }
+    // void UpdateCamera() {
+    //     auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
+    //     auto orbital = editor.OrbitalCameraControl;
+    //     auto origPSZP = editor.OrbitalCameraControl.m_ParamScrollZoomPower;
+    //     editor.OrbitalCameraControl.m_ParamScrollZoomPower = 0;
+    //     editor.ButtonZoomInOnClick();
+    //     editor.OrbitalCameraControl.m_ParamScrollZoomPower = origPSZP;
+    // }
 }
