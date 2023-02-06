@@ -1,28 +1,16 @@
 const float TAU = 6.28318530717958647692;
 
 void Main() {
-    startnew(WatchEditorAndValues);
 }
 
 bool lastEditorOpen = false;
-
-void WatchEditorAndValues() {
-    while (true) {
-        yield();
-        if (lastEditorOpen != (cast<CGameCtnEditorFree>(GetApp().Editor) !is null)) {
-            lastEditorOpen = !lastEditorOpen;
-            if (lastEditorOpen)
-                // do this in a coro so we update vertex count first.
-                startnew(Editor::Refresh);
-        }
-    }
-}
 
 AnimMgr@ CameraAnimMgr = AnimMgr(true);
 
 /** Called every frame. `dt` is the delta time (milliseconds since last frame).
 */
 void Update(float dt) {
+    if (!S_Enabled) return;
     UpdateAnimAndCamera();
 }
 
@@ -72,32 +60,23 @@ void NotifyWarning(const string &in msg) {
 const string PluginIcon = Icons::Kenney::StickMoveBtAlt;
 const string MenuTitle = "\\$f61" + PluginIcon + "\\$z " + Meta::ExecutingPlugin().Name;
 
-// show the window immediately upon installation
-[Setting hidden]
-bool ShowWindow = true;
 
 /** Render function called every frame intended only for menu items in `UI`. */
 void RenderMenu() {
-    if (UI::MenuItem(MenuTitle, "", ShowWindow)) {
-        ShowWindow = !ShowWindow;
+    if (UI::MenuItem(MenuTitle, "", S_Enabled)) {
+        S_Enabled = !S_Enabled;
     }
 }
 
 void RenderInterface() {
+    if (!S_Enabled) return;
     UpdateAnimAndCamera();
-}
-
-void Render() {
-    if (!ShowWindow) return;
-    if (UI::Begin(Meta::ExecutingPlugin().Name, ShowWindow)) {
-        if (UI::Button("Test Angles: Set Current")) TestAnglesSetCurrent();
-    }
-    UI::End();
 }
 
 /** Called whenever a key is pressed on the keyboard. See the documentation for the [`VirtualKey` enum](https://openplanet.dev/docs/api/global/VirtualKey).
 */
 UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
+    if (!S_Enabled) return;
     if (down && rebindInProgress) {
         ReportRebindKey(key);
         return UI::InputBlocking::Block;
@@ -123,16 +102,16 @@ bool CheckHotKey(VirtualKey k) {
         if (k == VirtualKey::Numpad2) return OnNumpad2();
         if (k == VirtualKey::Numpad8) return OnNumpad8();
         if (k == VirtualKey::Numpad5) return OnNumpad5();
-        if (k == VirtualKey::Subtract) return OnNumpadMinus();
-        if (k == VirtualKey::Add) return OnNumpadPlus();
+        if (k == VirtualKey::OemPlus) return OnOemPlus();
+        if (k == VirtualKey::OemMinus) return OnOemMinus();
     }
     return false;
 }
 
-bool OnNumpadMinus() {
+bool OnOemPlus() {
     return SetAnimationDistance(DestOrCurrentTargetDist() * (S_NearFar));
 }
-bool OnNumpadPlus() {
+bool OnOemMinus() {
     return SetAnimationDistance(DestOrCurrentTargetDist() / (S_NearFar));
 }
 

@@ -1,3 +1,6 @@
+[Setting hidden]
+bool S_Enabled = true;
+
 // [Setting category="Hotkeys" name="Front View (Blender: Numpad 1)"]
 [Setting hidden]
 VirtualKey S_FrontView = VirtualKey::Numpad1;
