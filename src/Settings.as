@@ -35,7 +35,7 @@ bool S_EnableAltToggle = true;
 [Setting category="Camera" name="Alt Numpad 2,4,6,8: Step Size (blocks)" description="How many blocks to move when override mode is set to move instead of rotate."]
 float S_MovementAmount = 3.0;
 
-[Setting category="Camera" min=1.0 max=5.0 name="Numpad +/-: Near/Far Zoom Ratio" description="If set to 2.0, pressing + will reduce your distance by 50% (zoom), pressing - will increase it by 100% (unzoom)."]
+[Setting category="Camera" min=1.0 max=5.0 name="Main KB +/-: Near/Far Zoom Ratio" description="If set to 2.0, pressing + will reduce your distance by 50% (zoom), pressing - will increase it by 100% (unzoom)."]
 float S_NearFar = 2.0;
 
 

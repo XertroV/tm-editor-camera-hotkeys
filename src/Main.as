@@ -1,9 +1,19 @@
 const float TAU = 6.28318530717958647692;
 
 void Main() {
+    startnew(WatchEditorAndValues);
 }
 
 bool lastEditorOpen = false;
+
+void WatchEditorAndValues() {
+    while (true) {
+        yield();
+        if (lastEditorOpen != (cast<CGameCtnEditorFree>(GetApp().Editor) !is null)) {
+            lastEditorOpen = !lastEditorOpen;
+        }
+    }
+}
 
 AnimMgr@ CameraAnimMgr = AnimMgr(true);
 
@@ -23,10 +33,8 @@ void UpdateAnimAndCamera() {
 
 
 void UpdateCameraProgress(float t) {
-    auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
-    // auto cam = editor.OrbitalCameraControl;
-    Editor::SetTargetedDistance(Math::Lerp(g_StartingTargetDist, g_EndingTargetDist, t), false);
-    Editor::SetTargetedPosition(Math::Lerp(g_StartingPos, g_EndingPos, t), false);
+    Editor::SetTargetedDistance(Math::Lerp(g_StartingTargetDist, g_EndingTargetDist, t));
+    Editor::SetTargetedPosition(Math::Lerp(g_StartingPos, g_EndingPos, t));
     Editor::SetOrbitalAngle(
         SimplifyRadians(Math::Lerp(g_StartingHAngle, g_EndingHAngle, t)),
         SimplifyRadians(Math::Lerp(g_StartingVAngle, g_EndingVAngle, t))
@@ -76,7 +84,7 @@ void RenderInterface() {
 /** Called whenever a key is pressed on the keyboard. See the documentation for the [`VirtualKey` enum](https://openplanet.dev/docs/api/global/VirtualKey).
 */
 UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
-    if (!S_Enabled) return;
+    if (!S_Enabled) return UI::InputBlocking::DoNothing;
     if (down && rebindInProgress) {
         ReportRebindKey(key);
         return UI::InputBlocking::Block;
@@ -109,10 +117,10 @@ bool CheckHotKey(VirtualKey k) {
 }
 
 bool OnOemPlus() {
-    return SetAnimationDistance(DestOrCurrentTargetDist() * (S_NearFar));
+    return SetAnimationDistance(DestOrCurrentTargetDist() / (S_NearFar));
 }
 bool OnOemMinus() {
-    return SetAnimationDistance(DestOrCurrentTargetDist() / (S_NearFar));
+    return SetAnimationDistance(DestOrCurrentTargetDist() * (S_NearFar));
 }
 
 bool OnNumpad5() {
