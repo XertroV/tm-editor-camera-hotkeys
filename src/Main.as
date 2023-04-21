@@ -36,9 +36,16 @@ void UpdateCameraProgress(float t) {
     Editor::SetTargetedDistance(Math::Lerp(g_StartingTargetDist, g_EndingTargetDist, t));
     Editor::SetTargetedPosition(Math::Lerp(g_StartingPos, g_EndingPos, t));
     Editor::SetOrbitalAngle(
-        SimplifyRadians(Math::Lerp(g_StartingHAngle, g_EndingHAngle, t)),
-        SimplifyRadians(Math::Lerp(g_StartingVAngle, g_EndingVAngle, t))
+        SimplifyRadians(AngleLerp(g_StartingHAngle, g_EndingHAngle, t)),
+        SimplifyRadians(AngleLerp(g_StartingVAngle, g_EndingVAngle, t))
     );
+}
+
+float AngleLerp(float start, float stop, float t) {
+    float diff = stop - start;
+    while (diff > Math::PI) { diff -= TAU; }
+    while (diff < -Math::PI) { diff += TAU; }
+    return start + diff * t;
 }
 
 float SimplifyRadians(float a) {
@@ -81,6 +88,58 @@ void RenderInterface() {
     UpdateAnimAndCamera();
 }
 
+enum MouseBtn {
+    Left = 0,
+    Right = 1,
+    Middle = 2
+}
+
+/** Called whenever a mouse button is pressed. `x` and `y` are the viewport coordinates.
+*/
+UI::InputBlocking OnMouseButton(bool down, int button, int x, int y) {
+    // 0: left, 1: right, 2: mid
+    // trace('' + button + ' ' + down);
+    if (S_CtrlRightClickToFocus && down && button == int(MouseBtn::Right)) {
+        OnFocusPickedElement();
+    }
+    return UI::InputBlocking::DoNothing;
+}
+
+
+void OnFocusPickedElement() {
+    auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
+    if (editor is null) return;
+    vec3 targetPos;
+    if (editor.PickedBlock !is null) {
+        if (editor.PickedBlock.Coord.x > 4000000000 || editor.PickedBlock.Coord.z > 4000000000) {
+            targetPos = Dev::GetOffsetVec3(editor.PickedBlock, 0x6c);
+        } else {
+            targetPos = editor.PluginMapType.GetVec3FromCoord(editor.PickedBlock.Coord);
+        }
+    } else if (editor.PickedObject !is null) {
+        targetPos = editor.PickedObject.AbsolutePositionInMap;
+    } else {
+        return;
+    }
+
+    auto camPos = editor.OrbitalCameraControl.Pos;
+    auto dir = (targetPos - camPos).Normalized();
+    SetAnimationGoTo(DirToLookUv(dir), targetPos, S_CameraFocusDistance);
+}
+
+vec2 DirToLookUv(vec3 &in dir) {
+    auto xz = (dir * vec3(1, 0, 1)).Normalized();
+    auto pitch = -Math::Asin(Math::Dot(dir, vec3(0, 1, 0)));
+    auto yaw = Math::Asin(Math::Dot(xz, vec3(1, 0, 0)));
+    if (Math::Dot(xz, vec3(0, 0, -1)) > 0) {
+        yaw = - yaw - Math::PI;
+        // trace('alt case');
+    }
+    auto lookUv = vec2(yaw, pitch) / Math::PI * 2.;
+    return lookUv;
+}
+
+
 /** Called whenever a key is pressed on the keyboard. See the documentation for the [`VirtualKey` enum](https://openplanet.dev/docs/api/global/VirtualKey).
 */
 UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
@@ -96,6 +155,8 @@ UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
     }
     return UI::InputBlocking::DoNothing;
 }
+
+
 
 bool overrideModeIsRotation = true;
 

@@ -38,7 +38,11 @@ float S_MovementAmount = 3.0;
 [Setting category="Camera" min=1.0 max=5.0 name="Main KB +/-: Near/Far Zoom Ratio" description="If set to 2.0, pressing + will reduce your distance by 50% (zoom), pressing - will increase it by 100% (unzoom)."]
 float S_NearFar = 2.0;
 
+[Setting category="Camera" name="Ctrl+Right Click to Focus Blocks/Items (overrides game)" description="When set, ctrl+right click acts like Blenders focus function ('.' on the numpad)."]
+bool S_CtrlRightClickToFocus = true;
 
+[Setting category="Camera" name="Camera Focus Distance" description="How far ctrl+right click will set the camera from the block/item."]
+float S_CameraFocusDistance = 96.;
 
 
 [SettingsTab name="Editor Camera Hotkeys" icon="Th" order="1"]

@@ -3,6 +3,8 @@ name     = "Editor Camera Hotkeys"
 author   = "XertroV"
 category = "Map Editor"
 version  = "0.1.5"
+siteid = 323
 
 [script]
 #__DEFINES__
+# dependencies = ["Camera"]
