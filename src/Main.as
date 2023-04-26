@@ -105,16 +105,35 @@ UI::InputBlocking OnMouseButton(bool down, int button, int x, int y) {
     return UI::InputBlocking::DoNothing;
 }
 
+string LastPickedBlockIdName;
+uint LastPickedBlockRClickTime = 0;
+uint lastPBRClickXZPointIx = 0;
 
 void OnFocusPickedElement() {
     auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
     if (editor is null) return;
     vec3 targetPos;
     if (editor.PickedBlock !is null) {
-        if (editor.PickedBlock.Coord.x > 4000000000 || editor.PickedBlock.Coord.z > 4000000000) {
-            targetPos = Dev::GetOffsetVec3(editor.PickedBlock, 0x6c);
-        } else {
-            targetPos = editor.PluginMapType.GetVec3FromCoord(editor.PickedBlock.Coord);
+        bool reClicked = LastPickedBlockIdName == editor.PickedBlock.IdName && (Time::Now - 10000) < LastPickedBlockRClickTime;
+        LastPickedBlockIdName = editor.PickedBlock.IdName;
+        LastPickedBlockRClickTime = Time::Now;
+        // on first click go to midpoint of block
+        targetPos = GetCtnBlockMidpoint(editor.PickedBlock);
+        if (reClicked) {
+            auto midPoint = targetPos;
+            auto block = editor.PickedBlock;
+            auto blockPos = GetBlockLocation(block);
+            // otherwise, go through the XZ edge/face midpoints (for easier freeblock placement)
+            lastPBRClickXZPointIx = (lastPBRClickXZPointIx + 1) % 8;
+            // want to go something like corner, edge, corner, edge...
+            bool corner = lastPBRClickXZPointIx & 0x1 == 1;
+            uint dirIx = lastPBRClickXZPointIx >> 1;
+            auto size = GetBlockSize(block);
+            auto angle = CardinalDirectionToYaw(dirIx);
+            // do offsets in (-.5,.5) for rotations, and (0,1) for multiplying by size so this works for non-square blocks
+            vec3 offset = corner ? vec3(-.5, 0, -.5) : vec3(-.5, 0, 0);
+            offset = (mat4::Rotate(angle, vec3(0, 1, 0)) * offset).xyz + vec3(.5);
+            targetPos = (GetBlockMatrix(block) * (size * offset)).xyz;
         }
     } else if (editor.PickedObject !is null) {
         targetPos = editor.PickedObject.AbsolutePositionInMap;
@@ -126,6 +145,7 @@ void OnFocusPickedElement() {
     auto dir = (targetPos - camPos).Normalized();
     SetAnimationGoTo(DirToLookUv(dir), targetPos, S_CameraFocusDistance);
 }
+
 
 vec2 DirToLookUv(vec3 &in dir) {
     auto xz = (dir * vec3(1, 0, 1)).Normalized();
@@ -336,4 +356,12 @@ void AddSimpleTooltip(const string &in msg) {
         UI::Text(msg);
         UI::EndTooltip();
     }
+}
+
+
+uint16 GetOffset(const string &in className, const string &in memberName) {
+    // throw exception when something goes wrong.
+    auto ty = Reflection::GetType(className);
+    auto memberTy = ty.GetMember(memberName);
+    return memberTy.Offset;
 }
