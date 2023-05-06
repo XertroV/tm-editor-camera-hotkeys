@@ -5,6 +5,7 @@ namespace Editor {
         editor.PluginMapType.Camera.IgnoreCameraCollisions(true);
         editor.OrbitalCameraControl.m_MaxVAngle = TAU * 100;
         editor.OrbitalCameraControl.m_MinVAngle = -TAU * 100;
+        startnew(Editor::DisableCustomCameraInputs);
     }
 
     void DisableCustomCameraInputs() {

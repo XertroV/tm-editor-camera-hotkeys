@@ -41,6 +41,9 @@ float S_NearFar = 2.0;
 [Setting category="Camera" name="Ctrl+Right Click to Focus Blocks/Items (overrides game)" description="When set, ctrl+right click acts like Blenders focus function ('.' on the numpad)."]
 bool S_CtrlRightClickToFocus = true;
 
+[Setting category="Camera" name="Repeated Ctrl+RClick on same block cycles through corners and edges" description="Will focus the target on the corner/edge of the middle slice of the block. Helps with free-block positioning."]
+bool S_RepeatedRClickCycles = true;
+
 [Setting category="Camera" name="Camera Focus Distance" description="How far ctrl+right click will set the camera from the block/item."]
 float S_CameraFocusDistance = 96.;
 

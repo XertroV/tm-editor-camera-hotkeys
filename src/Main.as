@@ -99,30 +99,34 @@ enum MouseBtn {
 UI::InputBlocking OnMouseButton(bool down, int button, int x, int y) {
     // 0: left, 1: right, 2: mid
     // trace('' + button + ' ' + down);
-    if (S_CtrlRightClickToFocus && down && button == int(MouseBtn::Right)) {
+    if (S_Enabled && S_CtrlRightClickToFocus && down && button == int(MouseBtn::Right)) {
         OnFocusPickedElement();
     }
     return UI::InputBlocking::DoNothing;
 }
 
 string LastPickedBlockIdName;
+vec3 LastPickedBlockPos;
 uint LastPickedBlockRClickTime = 0;
 uint lastPBRClickXZPointIx = 0;
 
 void OnFocusPickedElement() {
+    if (!S_Enabled) return;
     auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
     if (editor is null) return;
     vec3 targetPos;
     if (editor.PickedBlock !is null) {
-        bool reClicked = LastPickedBlockIdName == editor.PickedBlock.IdName && (Time::Now - 10000) < LastPickedBlockRClickTime;
+        auto blockPos = GetBlockLocation(editor.PickedBlock);
+        bool reClicked = LastPickedBlockIdName == editor.PickedBlock.IdName
+            && (blockPos - LastPickedBlockPos).LengthSquared() < 0.00001
+            && (Time::Now - 10000) < LastPickedBlockRClickTime;
         LastPickedBlockIdName = editor.PickedBlock.IdName;
         LastPickedBlockRClickTime = Time::Now;
+        LastPickedBlockPos = blockPos;
         // on first click go to midpoint of block
         targetPos = GetCtnBlockMidpoint(editor.PickedBlock);
-        if (reClicked) {
-            auto midPoint = targetPos;
+        if (reClicked && S_RepeatedRClickCycles) {
             auto block = editor.PickedBlock;
-            auto blockPos = GetBlockLocation(block);
             // otherwise, go through the XZ edge/face midpoints (for easier freeblock placement)
             lastPBRClickXZPointIx = (lastPBRClickXZPointIx + 1) % 8;
             // want to go something like corner, edge, corner, edge...
@@ -137,6 +141,7 @@ void OnFocusPickedElement() {
         }
     } else if (editor.PickedObject !is null) {
         targetPos = editor.PickedObject.AbsolutePositionInMap;
+        LastPickedBlockRClickTime = 0;
     } else {
         return;
     }
