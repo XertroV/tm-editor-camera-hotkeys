@@ -2,7 +2,7 @@
 name     = "Editor Camera Hotkeys"
 author   = "XertroV"
 category = "Map Editor"
-version  = "0.2.2"
+version  = "0.2.3"
 siteid = 323
 
 [script]
