@@ -8,3 +8,4 @@ siteid = 323
 [script]
 #__DEFINES__
 # dependencies = ["Camera"]
+# optional_dependencies = ["Editor"]

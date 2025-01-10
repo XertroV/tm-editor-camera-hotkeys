@@ -4,14 +4,24 @@ void Main() {
     startnew(WatchEditorAndValues);
 }
 
-bool lastEditorOpen = false;
+bool IsAnyEditorOpen, IsEditorOpen, WasEditorOpen, IsEditorInputMap, AreEditorInputsBlocked, AllowHotkeys;
 
 void WatchEditorAndValues() {
+    auto app = GetApp();
     while (true) {
-        yield();
-        if (lastEditorOpen != (cast<CGameCtnEditorFree>(GetApp().Editor) !is null)) {
-            lastEditorOpen = !lastEditorOpen;
+        IsAnyEditorOpen = app.Editor !is null;
+        WasEditorOpen = IsEditorOpen;
+
+        IsEditorOpen = IsEditorInputMap = AreEditorInputsBlocked = AllowHotkeys = false;
+        if (IsAnyEditorOpen) {
+            auto editor = cast<CGameCtnEditorFree>(app.Editor);
+            IsEditorOpen = editor !is null;
+            IsEditorInputMap = UI::CurrentActionMap() == "CtnEditor";
+            AreEditorInputsBlocked = IsEditorOpen && editor.PluginMapType.EnableEditorInputsCustomProcessing;
+            AllowHotkeys = IsEditorInputMap && !AreEditorInputsBlocked;
         }
+
+        yield();
     }
 }
 
@@ -25,7 +35,7 @@ void Update(float dt) {
 }
 
 void UpdateAnimAndCamera() {
-    if (lastEditorOpen && CameraAnimMgr !is null && !CameraAnimMgr.IsDone && CameraAnimMgr.Update(true)) {
+    if (IsEditorOpen && CameraAnimMgr !is null && !CameraAnimMgr.IsDone && CameraAnimMgr.Update(true)) {
         UpdateCameraProgress(CameraAnimMgr.Progress);
         if (CameraAnimMgr.IsDone) Editor::DisableCustomCameraInputs();
     }
@@ -100,7 +110,11 @@ UI::InputBlocking OnMouseButton(bool down, int button, int x, int y) {
     // 0: left, 1: right, 2: mid
     // trace('' + button + ' ' + down);
     if (S_Enabled && S_CtrlRightClickToFocus && down && button == int(MouseBtn::Right)) {
-        OnFocusPickedElement();
+// in lieu of a dependency, we can just check if custom input processing is enabled.
+// #if DEPENDENCY_EDITOR
+//         if (Editor::IsGizmoActive()) return UI::InputBlocking::DoNothing;
+// #endif
+        if (AllowHotkeys) OnFocusPickedElement();
     }
     return UI::InputBlocking::DoNothing;
 }
@@ -173,7 +187,11 @@ UI::InputBlocking OnKeyPress(bool down, VirtualKey key) {
         ReportRebindKey(key);
         return UI::InputBlocking::Block;
     }
-    if (down && lastEditorOpen && CheckHotKey(key)) {
+// in lieu of a dependency, we can just check if custom input processing is enabled.
+// #if DEPENDENCY_EDITOR
+//     if (Editor::IsGizmoActive()) return UI::InputBlocking::DoNothing;
+// #endif
+    if (down && AllowHotkeys && CheckHotKey(key)) {
         // return UI::InputBlocking::Block;
         // for the moment, don't block. it bugs editor inputs (and blocking inputs in general seems non-deterministic based on which plugins are installed)
         return UI::InputBlocking::DoNothing;
